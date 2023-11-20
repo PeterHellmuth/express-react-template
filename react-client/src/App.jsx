@@ -19,9 +19,9 @@ function normalizePort(val) {
   return false;
 }
 
-//const port = normalizePort(process.env.PORT || "3000"); //deployed
-//const SERVER_URL = "http://members-only.fly.dev"; //deployed
-const SERVER_URL = "http://localhost:" + "3000"; //dev test
+const port = normalizePort(process.env.PORT || "3000"); //deployed
+const SERVER_URL = "http://express-react-template.fly.dev"; //deployed
+//const SERVER_URL = "http://localhost:" + "3000"; //dev test
 
 function App() {
   //const [response, setResponse] = useState("");

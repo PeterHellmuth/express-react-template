@@ -7,7 +7,7 @@ dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 // Set up mongoose connection
 const mongoose = require("mongoose");
-const DEPLOY_URL = "http://members-only.fly.dev";
+const DEPLOY_URL = "http://express-react-template.fly.dev";
 
 mongoose.set("strictQuery", false);
 const mongoDB = `mongodb+srv://peterhellmuth:${process.env.MONGOOSE_PASS}@cluster0.kterel9.mongodb.net/members_only?retryWrites=true&w=majority`;
