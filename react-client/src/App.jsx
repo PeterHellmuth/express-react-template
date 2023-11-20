@@ -26,13 +26,66 @@ const SERVER_URL = "http://localhost:" + "3000"; //dev test
 function App() {
   //const [response, setResponse] = useState("");
   const [errors, setErrors] = useState([]);
-  const [currentPage, setCurrentPage] = useState("sign-up");
+  const [currentPage, setCurrentPage] = useState("login");
   const [user, setUser] = useState({ auth: false, name: "" });
   const [token, setToken] = useState(null);
 
   useEffect(() => {
-    setToken(localStorage.getItem("token"));
+    let loadToken = localStorage.getItem("jwtToken");
+    setToken(loadToken);
+    if (loadToken) {
+      authenticate(loadToken);
+    }
   }, []);
+
+  const logoutUser = () => {
+    let fetchUrl = "";
+    let data = null;
+    fetchUrl = `${SERVER_URL}/users/logout`;
+
+    fetch(fetchUrl, {
+      method: "POST",
+      headers: {
+        "Content-type": "application/json",
+        Authorization: "Bearer " + token,
+      },
+    })
+      .then((res) => {
+        if (res.ok) {
+          setToken(null);
+          setUser({ auth: false, name: "" });
+          localStorage.removeItem("jwtToken");
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  const authenticate = (authToken) => {
+    let fetchUrl = "";
+    let data = null;
+    fetchUrl = `${SERVER_URL}/users/authenticate`;
+
+    fetch(fetchUrl, {
+      method: "GET",
+      headers: {
+        "Content-type": "application/json",
+        Authorization: "Bearer " + authToken,
+      },
+    })
+      .then((res) => {
+        if (res.ok) {
+          return res.json();
+        }
+      })
+      .then((res) => {
+        setUser({ auth: true, name: res.username });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
 
   const loginUser = (e) => {
     e.preventDefault();
@@ -95,40 +148,57 @@ function App() {
       body: data,
     })
       .then((res) => {
-        if (res.ok) {
-          console.log("User Added.");
-          setErrors([]);
-        }
         if (res.status === 409) {
           setErrors({
             submit:
               "Username already exists. Please choose a new username or log in.",
           });
         }
-
-        return res.json().then((err) => {
-          const errorMessages = {};
-          err.forEach((error) => {
-            errorMessages[error.path] = error.msg;
+        if (res.status === 400) {
+          return res.json().then((err) => {
+            const errorMessages = {};
+            err.forEach((error) => {
+              errorMessages[error.path] = error.msg;
+            });
+            setErrors(errorMessages);
           });
-          setErrors(errorMessages);
-        });
+        }
+        return res.json();
+      })
+      .then((data) => {
+        //save token from new user
+        setToken(data.token);
+        localStorage.setItem("jwtToken", data.token);
+        setUser({ auth: true, name: data.username });
+        setErrors([]);
+        setCurrentPage("login");
       })
       .catch((err) => console.log(err));
   };
 
-  if (user.auth) {
-    return (
-      <div>
-        You are logged in as {user.name}
-        <button type="button">Logout</button>
-      </div>
-    );
-  } else {
-    return <Login loginUser={loginUser} errors={errors} />;
+  if (currentPage === "login") {
+    if (user.auth) {
+      return (
+        <div>
+          You are logged in as {user.name}
+          <button type="button" onClick={logoutUser}>
+            Logout
+          </button>
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          <Login loginUser={loginUser} errors={errors} />
+          <button type="button" onClick={() => setCurrentPage("signup")}>
+            Create Account
+          </button>
+        </div>
+      );
+    }
+  } else if (currentPage === "signup") {
+    return <SignUp addUser={addUser} errors={errors} />;
   }
-
-  //<SignUp addUser={addUser} errors={errors} />
 }
 
 export default App;

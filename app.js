@@ -1,10 +1,7 @@
 const express = require("express");
 const path = require("path");
-//const cookieParser = require("cookie-parser");
 const logger = require("morgan");
-const session = require("cookie-session");
 const dotenv = require("dotenv");
-//const passport = require("./passport");
 
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 
@@ -50,20 +47,11 @@ app.use(
     },
   })
 );
-/* Set Cookie Settings */
-/*
-app.use(
-  session({
-    name: "session",
-    secret: process.env.COOKIE_SECRET,
-    expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-  })
-);*/
 
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-//app.use(cookieParser());
+
 const buildPath = path.normalize(path.join(__dirname, "./react-client/dist"));
 app.use(express.static(buildPath));
 app.use(cors());

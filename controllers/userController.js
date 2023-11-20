@@ -5,18 +5,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const saltRounds = 10; //required by bcrypt
 
-exports.user_detail = asyncHandler(async (req, res, next) => {
-  const user = await User.findById(req.params.id).exec();
-  if (user === null) {
-    // No results.
-    const err = new Error("User not found");
-    err.status = 404;
-    return next(err);
-  }
-
-  res.send(user.username);
-});
-
 exports.user_login_post = [
   // Validate and sanitize fields.
   body("username")
@@ -59,15 +47,14 @@ exports.user_login_post = [
         });
 
         if (token) {
-          console.log("test");
           return res.json({
             token: token,
             username: matchingPassword[0].username,
           });
         }
-        return res.sendStatus(401);
+        return res.status(401).send();
       } else {
-        return res.sendStatus(400);
+        return res.status(400).send();
       }
     }
   }),
@@ -79,7 +66,7 @@ const getToken = (payload) =>
     jwt.sign(
       payload,
       process.env.JWT_SECRET_KEY,
-      { algorithm: "HS256" },
+      { algorithm: "HS256", expiresIn: "24h" },
       (err, token) => {
         if (err) rjct(err);
         else rslv(token);
@@ -100,7 +87,12 @@ exports.verifyToken = (req, res, next) => {
       }
     });
   }
-  return res.sendStatus(403);
+
+  return res.status(403).send();
+};
+
+exports.user_authenticate_get = (req, res) => {
+  return res.status(200).json({ username: req.user.username });
 };
 
 exports.user_logout_post = (req, res) => {
@@ -109,7 +101,7 @@ exports.user_logout_post = (req, res) => {
     const bearerToken = bearerHeader.split(" ")[1];
     //add bearerToken to blacklist
   }
-  return res.sendStatus(200);
+  return res.status(200).send();
 };
 
 exports.user_create_post = [
@@ -169,6 +161,16 @@ exports.user_create_post = [
             // otherwise, store hashedPassword in DB
             user.password = hashedPassword;
             await user.save();
+            const token = await getToken({
+              username: req.body.username,
+            });
+
+            if (token) {
+              return res.json({
+                token: token,
+                username: req.body.username,
+              });
+            }
             res.status(200).send();
           }
         });
